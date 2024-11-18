@@ -1,0 +1,15 @@
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\bin\Debug\net7.0\SampleConsoleApp.exe
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\bin\Debug\net7.0\SampleConsoleApp.deps.json
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\bin\Debug\net7.0\SampleConsoleApp.runtimeconfig.json
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\bin\Debug\net7.0\SampleConsoleApp.dll
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\bin\Debug\net7.0\SampleConsoleApp.pdb
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\SampleConsoleApp.csproj.AssemblyReference.cache
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\SampleConsoleApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\SampleConsoleApp.AssemblyInfoInputs.cache
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\SampleConsoleApp.AssemblyInfo.cs
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\SampleConsoleApp.csproj.CoreCompileInputs.cache
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\SampleConsoleApp.dll
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\refint\SampleConsoleApp.dll
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\SampleConsoleApp.pdb
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\SampleConsoleApp.genruntimeconfig.cache
+C:\Users\joshm\BKESoftware\sources\dev\SampleConsoleApp\obj\Debug\net7.0\ref\SampleConsoleApp.dll
