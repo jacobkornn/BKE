@@ -12,6 +12,7 @@ window.onload = function () {
     console.log("onLoad function called");
     tempTagsArray = tagTransform(formContext);
     displayTagsAsBubbles(tempTagsArray, formContext);
+    
     function tagTransform(formContext) {
         const accountTags = formContext.getAttribute("cr7e8_accounttags").getValue();
         if (accountTags) {
@@ -33,7 +34,7 @@ window.onload = function () {
         addBubble.style.padding = "5px 10px";
         addBubble.style.width = "auto";
 
-        addBubble.onclick = () => {
+        addBubble.onclick = () => { //create an add tag bubble
             const inputBubble = document.createElement("div");
             inputBubble.className = "bubble";
             const input = document.createElement("input");
@@ -70,7 +71,7 @@ window.onload = function () {
         };
         container.appendChild(addBubble);
 
-        tags.forEach(tag => {
+        tags.forEach(tag => { //create a bubble for each tag
             const bubble = document.createElement("div");
             bubble.className = "bubble";
 
@@ -139,6 +140,7 @@ window.onload = function () {
             };
             container.appendChild(bubble);
         });
+        //display bubbles on HTML web resource 'WebResource_BubbleContainers'
         const webResourceControl = formContext.getControl("WebResource_BubbleContainers");
         if (webResourceControl) {
             console.log("webResourceControl successful. Now getting webResourceObject...");
@@ -156,10 +158,13 @@ window.onload = function () {
                     } else {
                         console.error("ERROR 4: Web resource element still not found after load.");
                     }
-                };
+                }
                 if (webResourceObject.readyState === 'complete') {
+                    console.log("webResourceObject.readyState is complete. Appending bubbles...");
+                    webResourceObject.removeEventLisener('load', appendBubbles);
                     appendBubbles();
                 } else {
+                    console.log("webResourceObject.readyState is not complete. Adding event listener...");
                     webResourceObject.addEventListener('load', appendBubbles);
                 }
             } else {
