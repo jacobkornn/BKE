@@ -1,17 +1,22 @@
+let tempTagsArray = [];
 //this function is called by BubbleContainers.html (or 'WebResource_BubbleContainers' within the context of the form)
 function formOnLoad() { 
     //console.log("in the formOnLoad function");
     var formContext = parent.Xrm.Page;
+    formContext.data.entity.addOnSave(function () {
+        formContext.getAttribute("cr7e8_accounttags").setValue(tempTagsArray.join(', '));
+        console.log("Tags saved to cr7e8_accounttags.");
+    });
     InitializeTagContainers(formContext);
 }
 
 function InitializeTagContainers(formContext) { 
     //console.log("JavaScript function called after page load");
-    let tempTagsArray = [];
+    //let tempTagsArray = [];
     console.log("Initializing form");
     tempTagsArray = tagTransform(formContext);
-    console.log(tempTagsArray);
-    displayTagsAsBubbles(tempTagsArray, formContext);
+    //console.log(tempTagsArray);
+    displayTagsAsBubbles(tempTagsArray, formContext, tempTagsArray);
 }
 
 function tagTransform(formContext) {
@@ -24,7 +29,7 @@ function tagTransform(formContext) {
     }
 }
 
-function displayTagsAsBubbles(tags, formContext) {
+function displayTagsAsBubbles(tags, formContext, tempTagsArray) {
     //console.log("displayTagsAsBubbles function called with tags:", tags);
     const container = document.createElement("div");
     container.className = "bubble-container";
@@ -88,7 +93,10 @@ function displayTagsAsBubbles(tags, formContext) {
         deleteButton.style.fontSize = "14px";
         deleteButton.onclick = () => {
             bubble.remove();
-            tempTagsArray = tempTagsArray.filter(t => t !== tag);
+            const tagIndex = tempTagsArray.indexOf(tag);
+            if (tagIndex > -1) { 
+                tempTagsArray.splice(tagIndex, 1); 
+            }
             //displayTagsAsBubbles(tempTagsArray, formContext);
         };
         
@@ -166,27 +174,27 @@ function displayTagsAsBubbles(tags, formContext) {
     }
 }
 
-function addTagToAccount(tag, formContext) {
-    if (!tempTagsArray.includes(tag)) {
-        tempTagsArray.push(tag);
-        //displayTagsAsBubbles(tempTagsArray, formContext);
-        console.log(`Tag "${tag}" added to temporary tags array.`);
-    }
-}
+// function addTagToAccount(tag, formContext, tempTagsArray) {
+//     if (!tempTagsArray.includes(tag)) {
+//         tempTagsArray.push(tag);
+//         //displayTagsAsBubbles(tempTagsArray, formContext);
+//         console.log(`Tag "${tag}" added to temporary tags array.`);
+//     }
+// }
 
-function removeTagFromAccount(tag, formContext) {
-    tempTagsArray = tempTagsArray.filter(t => t !== tag);
-    displayTagsAsBubbles(tempTagsArray, formContext);
-    console.log(`Tag "${tag}" removed from temporary tags array.`);
-}
+// function removeTagFromAccount(tag, formContext, tempTagsArray) {
+//     tempTagsArray = tempTagsArray.filter(t => t !== tag);
+//     displayTagsAsBubbles(tempTagsArray, formContext);
+//     console.log(`Tag "${tag}" removed from temporary tags array.`);
+// }
 
-function renameTagInAccount(oldTag, newTag, formContext) {
-    const tagIndex = tempTagsArray.indexOf(oldTag);
-    if (tagIndex !== -1 && !tempTagsArray.includes(newTag)) {
-        tempTagsArray[tagIndex] = newTag;
-        //displayTagsAsBubbles(tempTagsArray, formContext);
-        console.log(`Tag "${oldTag}" renamed to "${newTag}" in temporary tags array.`);
-    } else {
-        console.error(`Tag "${oldTag}" not found in temporary tags array or new tag already exists.`);
-    }
-}
+// function renameTagInAccount(oldTag, newTag, formContext, tempTagsArray) {
+//     const tagIndex = tempTagsArray.indexOf(oldTag);
+//     if (tagIndex !== -1 && !tempTagsArray.includes(newTag)) {
+//         tempTagsArray[tagIndex] = newTag;
+//         //displayTagsAsBubbles(tempTagsArray, formContext);
+//         console.log(`Tag "${oldTag}" renamed to "${newTag}" in temporary tags array.`);
+//     } else {
+//         console.error(`Tag "${oldTag}" not found in temporary tags array or new tag already exists.`);
+//     }
+// }
