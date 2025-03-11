@@ -1,65 +1,137 @@
-function formOnLoad(executionContext) {
-    //Entry point from app. Functionality is wrapped in 'window.onload' below to ensure all the form's web resources are loaded before manipulation. 
-    var formContext = executionContext.getFormContext();
-    window.formContext = formContext; //pass the formContext
-    if (typeof window.onload === 'function') {
-        window.onload();
+//this function is called by BubbleContainers.html (or 'WebResource_BubbleContainers' within the context of the form)
+function formOnLoad() { 
+    //console.log("in the formOnLoad function");
+    var formContext = parent.Xrm.Page;
+    InitializeTagContainers(formContext);
+}
+
+function InitializeTagContainers(formContext) { 
+    //console.log("JavaScript function called after page load");
+    let tempTagsArray = [];
+    console.log("Initializing form");
+    tempTagsArray = tagTransform(formContext);
+    console.log(tempTagsArray);
+    displayTagsAsBubbles(tempTagsArray, formContext);
+}
+
+function tagTransform(formContext) {
+    const accountTags = formContext.getAttribute("cr7e8_accounttags").getValue();
+    if (accountTags) {
+        return accountTags.split(/[,;]/).map(tag => tag.trim());
+    } else {
+        console.log("No tags found for the current account.");
+        return [];
     }
 }
 
-window.onload = function () {
-    let tempTagsArray = [];
-    console.log("onLoad function called");
-    tempTagsArray = tagTransform(formContext);
-    displayTagsAsBubbles(tempTagsArray, formContext);
-    
-    function tagTransform(formContext) {
-        const accountTags = formContext.getAttribute("cr7e8_accounttags").getValue();
-        if (accountTags) {
-            return accountTags.split(/[,;]/).map(tag => tag.trim());
-        } else {
-            console.error("No tags found for the current account.");
-            return [];
-        }
-    }
-    function displayTagsAsBubbles(tags, formContext) {
-        console.log("displayTagsAsBubbles function called with tags:", tags);
-        const container = document.createElement("div");
-        container.className = "bubble-container";
+function displayTagsAsBubbles(tags, formContext) {
+    //console.log("displayTagsAsBubbles function called with tags:", tags);
+    const container = document.createElement("div");
+    container.className = "bubble-container";
 
-        const addBubble = document.createElement("div");
-        addBubble.className = "bubble";
-        addBubble.textContent = "+";
-        addBubble.style.cursor = "pointer";
-        addBubble.style.padding = "5px 10px";
-        addBubble.style.width = "auto";
+    const addBubble = document.createElement("div");
+    addBubble.className = "bubble";
+    addBubble.textContent = "+";
+    addBubble.style.cursor = "pointer";
+    addBubble.style.padding = "5px 10px";
+    addBubble.style.width = "auto";
 
-        addBubble.onclick = () => { //create an add tag bubble
-            const inputBubble = document.createElement("div");
-            inputBubble.className = "bubble";
+    addBubble.onclick = () => { //create an add tag bubble
+        const inputBubble = document.createElement("div");
+        inputBubble.className = "bubble";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "edit-input";
+        input.style.fontFamily = "'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif";
+        input.style.fontSize = "14px";
+        input.style.border = "none";
+        input.style.outline = "none";
+        input.style.height = "100%";
+        input.style.backgroundColor = "#ffffff";
+        input.style.padding = "0 10px";
+        inputBubble.appendChild(input);
+        addBubble.replaceWith(inputBubble);
+        input.focus();
+
+        const tagInput = () => {
+            const newTag = input.value.trim();
+            if (newTag && !tempTagsArray.includes(newTag)) {
+                tempTagsArray.push(newTag);
+                inputBubble.replaceWith(addBubble);
+                //displayTagsAsBubbles(tempTagsArray, formContext);
+            } else {
+                inputBubble.replaceWith(addBubble);
+            }
+        };
+
+        input.addEventListener("blur", tagInput);
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                tagInput();
+            }
+        });
+    };
+    container.appendChild(addBubble);
+
+    tags.forEach(tag => { //create a bubble for each tag
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+
+        const bubbleText = document.createElement("span");
+        bubbleText.textContent = tag;
+        bubble.appendChild(bubbleText);
+
+        const deleteButton = document.createElement("span");
+        deleteButton.className = "delete-button";
+        deleteButton.innerHTML = "&times;";
+        deleteButton.style.marginLeft = "12px";
+        deleteButton.style.fontSize = "14px";
+        deleteButton.onclick = () => {
+            bubble.remove();
+            tempTagsArray = tempTagsArray.filter(t => t !== tag);
+            //displayTagsAsBubbles(tempTagsArray, formContext);
+        };
+        
+        bubble.appendChild(deleteButton);
+
+        bubble.ondblclick = () => {
             const input = document.createElement("input");
             input.type = "text";
+            input.value = tag;
             input.className = "edit-input";
             input.style.fontFamily = "'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif";
-            input.style.fontSize = "14px";
+            input.style.fontSize = bubbleText.style.fontSize;
             input.style.border = "none";
             input.style.outline = "none";
             input.style.height = "100%";
             input.style.backgroundColor = "#ffffff";
             input.style.padding = "0 10px";
-            inputBubble.appendChild(input);
-            addBubble.replaceWith(inputBubble);
+
+            const tempSpan = document.createElement("span");
+            tempSpan.style.fontFamily = input.style.fontFamily;
+            tempSpan.style.fontSize = input.style.fontSize;
+            tempSpan.style.visibility = "hidden";
+            tempSpan.style.position = "absolute";
+            tempSpan.textContent = input.value;
+            document.body.appendChild(tempSpan);
+            const textWidth = tempSpan.offsetWidth;
+            document.body.removeChild(tempSpan);
+
+            input.style.width = `${textWidth + 20}px`;
+            bubbleText.replaceWith(input);
             input.focus();
 
             const tagInput = () => {
                 const newTag = input.value.trim();
-                if (newTag && !tempTagsArray.includes(newTag)) {
-                    tempTagsArray.push(newTag);
-                    inputBubble.replaceWith(addBubble);
-                    //displayTagsAsBubbles(tempTagsArray, formContext);
-                } else {
-                    inputBubble.replaceWith(addBubble);
+                if (newTag && newTag !== tag && !tempTagsArray.includes(newTag)) {
+                    const tagIndex = tempTagsArray.indexOf(tag);
+                    if (tagIndex !== -1) {
+                        tempTagsArray[tagIndex] = newTag;
+                        //displayTagsAsBubbles(tempTagsArray, formContext);
+                    }
+                    bubbleText.textContent = newTag;
                 }
+                input.replaceWith(bubbleText);
             };
 
             input.addEventListener("blur", tagInput);
@@ -69,137 +141,52 @@ window.onload = function () {
                 }
             });
         };
-        container.appendChild(addBubble);
-
-        tags.forEach(tag => { //create a bubble for each tag
-            const bubble = document.createElement("div");
-            bubble.className = "bubble";
-
-            const bubbleText = document.createElement("span");
-            bubbleText.textContent = tag;
-            bubble.appendChild(bubbleText);
-
-            const deleteButton = document.createElement("span");
-            deleteButton.className = "delete-button";
-            deleteButton.innerHTML = "&times;";
-            deleteButton.style.marginLeft = "12px";
-            deleteButton.style.fontSize = "14px";
-            deleteButton.onclick = () => {
-                bubble.remove();
-                tempTagsArray = tempTagsArray.filter(t => t !== tag);
-                //displayTagsAsBubbles(tempTagsArray, formContext);
-            };
-            bubble.appendChild(deleteButton);
-
-            bubble.ondblclick = () => {
-                const input = document.createElement("input");
-                input.type = "text";
-                input.value = tag;
-                input.className = "edit-input";
-                input.style.fontFamily = "'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif";
-                input.style.fontSize = bubbleText.style.fontSize;
-                input.style.border = "none";
-                input.style.outline = "none";
-                input.style.height = "100%";
-                input.style.backgroundColor = "#ffffff";
-                input.style.padding = "0 10px";
-
-                const tempSpan = document.createElement("span");
-                tempSpan.style.fontFamily = input.style.fontFamily;
-                tempSpan.style.fontSize = input.style.fontSize;
-                tempSpan.style.visibility = "hidden";
-                tempSpan.style.position = "absolute";
-                tempSpan.textContent = input.value;
-                document.body.appendChild(tempSpan);
-                const textWidth = tempSpan.offsetWidth;
-                document.body.removeChild(tempSpan);
-
-                input.style.width = `${textWidth + 20}px`;
-                bubbleText.replaceWith(input);
-                input.focus();
-
-                const tagInput = () => {
-                    const newTag = input.value.trim();
-                    if (newTag && newTag !== tag && !tempTagsArray.includes(newTag)) {
-                        const tagIndex = tempTagsArray.indexOf(tag);
-                        if (tagIndex !== -1) {
-                            tempTagsArray[tagIndex] = newTag;
-                            //displayTagsAsBubbles(tempTagsArray, formContext);
-                        }
-                        bubbleText.textContent = newTag;
-                    }
-                    input.replaceWith(bubbleText);
-                };
-
-                input.addEventListener("blur", tagInput);
-                input.addEventListener("keydown", (e) => {
-                    if (e.key === "Enter") {
-                        tagInput();
-                    }
-                });
-            };
-            container.appendChild(bubble);
-        });
-        //display bubbles on HTML web resource 'WebResource_BubbleContainers'
-        const webResourceControl = formContext.getControl("WebResource_BubbleContainers");
-        if (webResourceControl) {
-            console.log("webResourceControl successful. Now getting webResourceObject...");
-            const webResourceObject = webResourceControl.getObject();
-            if (webResourceObject) {
-                console.log("webResourceObject successful. Now getting appending container...");
-                const appendBubbles = () => {
-                    const webResourceElement = webResourceObject.contentDocument || webResourceObject.contentWindow.document;
-                    if (webResourceElement) {
-                        console.log("webResourceElement successful.");
-                        webResourceElement.body.innerHTML = '';
-                        console.log("HTML body reset.");
-                        webResourceElement.body.appendChild(container);
-                        console.log("Container appended.");
-                    } else {
-                        console.error("ERROR 4: Web resource element still not found after load.");
-                    }
-                }
-                if (webResourceObject.readyState === 'complete') {
-                    console.log("webResourceObject.readyState is complete. Appending bubbles...");
-                    webResourceObject.removeEventLisener('load', appendBubbles);
-                    appendBubbles();
+        container.appendChild(bubble);
+    });
+    //display bubbles on HTML web resource 'WebResource_BubbleContainers'
+    const webResourceControl = formContext.getControl("WebResource_BubbleContainers");
+    if (webResourceControl) {
+        const webResourceObject = webResourceControl.getObject();
+        if (webResourceObject) {
+            const appendBubbles = () => {
+                const webResourceElement = webResourceObject.contentDocument || webResourceObject.contentWindow.document;
+                if (webResourceElement) {
+                    webResourceElement.body.innerHTML = '';
+                    webResourceElement.body.appendChild(container);
                 } else {
-                    console.log("webResourceObject.readyState is not complete. Adding event listener...");
-                    webResourceObject.addEventListener('load', appendBubbles);
+                    console.error("ERROR 4: Web resource element still not found after load.");
                 }
-            } else {
-                console.error("ERROR 2: Web resource object not found.");
             }
+            appendBubbles();
         } else {
-            console.error("ERROR 1: Web resource control not found.");
+            console.error("ERROR 2: Web resource object not found.");
         }
+    } else {
+        console.error("ERROR 1: Web resource control not found.");
     }
-    function addTagToAccount(tag, formContext) {
-        if (!tempTagsArray.includes(tag)) {
-            tempTagsArray.push(tag);
-            //displayTagsAsBubbles(tempTagsArray, formContext);
-            console.log(`Tag "${tag}" added to temporary tags array.`);
-        }
-    }
-    function removeTagFromAccount(tag, formContext) {
-        tempTagsArray = tempTagsArray.filter(t => t !== tag);
-        displayTagsAsBubbles(tempTagsArray, formContext);
-        console.log(`Tag "${tag}" removed from temporary tags array.`);
-    }
-    function renameTagInAccount(oldTag, newTag, formContext) {
-        const tagIndex = tempTagsArray.indexOf(oldTag);
-        if (tagIndex !== -1 && !tempTagsArray.includes(newTag)) {
-            tempTagsArray[tagIndex] = newTag;
-            //displayTagsAsBubbles(tempTagsArray, formContext);
-            console.log(`Tag "${oldTag}" renamed to "${newTag}" in temporary tags array.`);
-        } else {
-            console.error(`Tag "${oldTag}" not found in temporary tags array or new tag already exists.`);
-        }
-    }
+}
 
-    this.tagTransform = tagTransform;
-    this.displayTagsAsBubbles = displayTagsAsBubbles;
-    this.addTagToAccount = addTagToAccount;
-    this.removeTagFromAccount = removeTagFromAccount;
-    this.renameTagInAccount = renameTagInAccount;
-};
+function addTagToAccount(tag, formContext) {
+    if (!tempTagsArray.includes(tag)) {
+        tempTagsArray.push(tag);
+        //displayTagsAsBubbles(tempTagsArray, formContext);
+        console.log(`Tag "${tag}" added to temporary tags array.`);
+    }
+}
+
+function removeTagFromAccount(tag, formContext) {
+    tempTagsArray = tempTagsArray.filter(t => t !== tag);
+    displayTagsAsBubbles(tempTagsArray, formContext);
+    console.log(`Tag "${tag}" removed from temporary tags array.`);
+}
+
+function renameTagInAccount(oldTag, newTag, formContext) {
+    const tagIndex = tempTagsArray.indexOf(oldTag);
+    if (tagIndex !== -1 && !tempTagsArray.includes(newTag)) {
+        tempTagsArray[tagIndex] = newTag;
+        //displayTagsAsBubbles(tempTagsArray, formContext);
+        console.log(`Tag "${oldTag}" renamed to "${newTag}" in temporary tags array.`);
+    } else {
+        console.error(`Tag "${oldTag}" not found in temporary tags array or new tag already exists.`);
+    }
+}
