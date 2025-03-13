@@ -1,5 +1,11 @@
+//temporary array to store manipulated tag values until the user saves the form
 let tempTagsArray = [];
-//this function is called by BubbleContainers.html (or 'WebResource_BubbleContainers' within the context of the form)
+   
+/*
+This function is called by BubbleContainers.html (or 'WebResource_BubbleContainers' within the context of the form).
+to ensure the code only runs once the HTML is loaded. As a result, this code is not used as a traditional event handler in the form editor,
+but is accessed by the HTML instead, through the application's web resource library. 
+*/
 function formOnLoad() { 
     //console.log("in the formOnLoad function");
     var formContext = parent.Xrm.Page;
@@ -12,11 +18,10 @@ function formOnLoad() {
 
 function InitializeTagContainers(formContext) { 
     //console.log("JavaScript function called after page load");
-    //let tempTagsArray = [];
     console.log("Initializing form");
     tempTagsArray = tagTransform(formContext);
     //console.log(tempTagsArray);
-    displayTagsAsBubbles(tempTagsArray, formContext, tempTagsArray);
+    displayTagsAsBubbles(formContext);
 }
 
 function tagTransform(formContext) {
@@ -29,19 +34,106 @@ function tagTransform(formContext) {
     }
 }
 
-function displayTagsAsBubbles(tags, formContext, tempTagsArray) {
-    //console.log("displayTagsAsBubbles function called with tags:", tags);
+function createBubble(tag, container) {
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+
+    const bubbleText = document.createElement("span");
+    bubbleText.textContent = tag;
+    bubble.appendChild(bubbleText);
+
+    const deleteButton = document.createElement("span");
+    deleteButton.className = "delete-button";
+    deleteButton.innerHTML = "&times;";
+    deleteButton.style.marginLeft = "12px";
+    deleteButton.style.fontSize = "14px";
+    deleteButton.onclick = () => {
+        console.log("Delete button clicked for tag:", tag);
+        bubble.remove();
+        const tagIndex = tempTagsArray.indexOf(tag);
+        if (tagIndex > -1) { 
+            tempTagsArray.splice(tagIndex, 1); 
+        }
+    };
+
+    bubble.appendChild(deleteButton);
+
+    bubble.ondblclick = () => {
+        console.log("Bubble double-clicked for tag:", tag);
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = tag;
+        input.className = "edit-input";
+        input.style.fontFamily = "'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif";
+        input.style.fontSize = bubbleText.style.fontSize;
+        input.style.border = "none";
+        input.style.outline = "none";
+        input.style.height = "100%";
+        input.style.backgroundColor = "#ffffff";
+        input.style.padding = "0 10px";
+
+        const tempSpan = document.createElement("span");
+        tempSpan.style.fontFamily = input.style.fontFamily;
+        tempSpan.style.fontSize = input.style.fontSize;
+        tempSpan.style.visibility = "hidden";
+        tempSpan.style.position = "absolute";
+        tempSpan.textContent = input.value;
+        document.body.appendChild(tempSpan);
+        const textWidth = tempSpan.offsetWidth;
+        document.body.removeChild(tempSpan);
+
+        input.style.width = `${textWidth + 20}px`;
+        bubbleText.replaceWith(input);
+        input.focus();
+
+        const tagInput = () => {
+            const updatedTag = input.value.trim();
+            if (updatedTag && updatedTag !== tag && !tempTagsArray.includes(updatedTag)) {
+                const tagIndex = tempTagsArray.indexOf(tag);
+                if (tagIndex !== -1) {
+                    tempTagsArray[tagIndex] = updatedTag;
+                    bubbleText.textContent = updatedTag;
+                }
+            }
+            input.replaceWith(bubbleText);
+        };
+
+        input.addEventListener("blur", tagInput);
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                tagInput();
+            }
+        });
+    };
+
+    container.insertBefore(bubble, container.lastChild);
+}
+
+function handleTagInput(input, inputBubble, addBubble, container) {
+    const newTag = input.value.trim();
+    if (newTag && !tempTagsArray.includes(newTag)) {
+        tempTagsArray.push(newTag);
+        inputBubble.replaceWith(addBubble);
+        createBubble(newTag, container);
+    } else {
+        inputBubble.replaceWith(addBubble);
+    }
+}
+
+function displayTagsAsBubbles(formContext) {
+    console.log("displayTagsAsBubbles function called with tags:", tempTagsArray);
+    console.log("tempTagsArray:", tempTagsArray);
     const container = document.createElement("div");
     container.className = "bubble-container";
 
-    const addBubble = document.createElement("div");
+    const addBubble = document.createElement("div"); //this is the "+" bubble which acts as an Add Tag button.
     addBubble.className = "bubble";
     addBubble.textContent = "+";
     addBubble.style.cursor = "pointer";
     addBubble.style.padding = "5px 10px";
     addBubble.style.width = "auto";
 
-    addBubble.onclick = () => { //create an add tag bubble
+    addBubble.onclick = () => {
         const inputBubble = document.createElement("div");
         inputBubble.className = "bubble";
         const input = document.createElement("input");
@@ -58,101 +150,18 @@ function displayTagsAsBubbles(tags, formContext, tempTagsArray) {
         addBubble.replaceWith(inputBubble);
         input.focus();
 
-        const tagInput = () => {
-            const newTag = input.value.trim();
-            if (newTag && !tempTagsArray.includes(newTag)) {
-                tempTagsArray.push(newTag);
-                inputBubble.replaceWith(addBubble);
-                //displayTagsAsBubbles(tempTagsArray, formContext);
-            } else {
-                inputBubble.replaceWith(addBubble);
-            }
-        };
-
-        input.addEventListener("blur", tagInput);
+        input.addEventListener("blur", () => handleTagInput(input, inputBubble, addBubble, container));
         input.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
-                tagInput();
+                handleTagInput(input, inputBubble, addBubble, container);
             }
         });
     };
     container.appendChild(addBubble);
 
-    tags.forEach(tag => { //create a bubble for each tag
-        const bubble = document.createElement("div");
-        bubble.className = "bubble";
+    tempTagsArray.forEach(tag => createBubble(tag, container));
 
-        const bubbleText = document.createElement("span");
-        bubbleText.textContent = tag;
-        bubble.appendChild(bubbleText);
-
-        const deleteButton = document.createElement("span");
-        deleteButton.className = "delete-button";
-        deleteButton.innerHTML = "&times;";
-        deleteButton.style.marginLeft = "12px";
-        deleteButton.style.fontSize = "14px";
-        deleteButton.onclick = () => {
-            bubble.remove();
-            const tagIndex = tempTagsArray.indexOf(tag);
-            if (tagIndex > -1) { 
-                tempTagsArray.splice(tagIndex, 1); 
-            }
-            //displayTagsAsBubbles(tempTagsArray, formContext);
-        };
-        
-        bubble.appendChild(deleteButton);
-
-        bubble.ondblclick = () => {
-            const input = document.createElement("input");
-            input.type = "text";
-            input.value = tag;
-            input.className = "edit-input";
-            input.style.fontFamily = "'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif";
-            input.style.fontSize = bubbleText.style.fontSize;
-            input.style.border = "none";
-            input.style.outline = "none";
-            input.style.height = "100%";
-            input.style.backgroundColor = "#ffffff";
-            input.style.padding = "0 10px";
-
-            const tempSpan = document.createElement("span");
-            tempSpan.style.fontFamily = input.style.fontFamily;
-            tempSpan.style.fontSize = input.style.fontSize;
-            tempSpan.style.visibility = "hidden";
-            tempSpan.style.position = "absolute";
-            tempSpan.textContent = input.value;
-            document.body.appendChild(tempSpan);
-            const textWidth = tempSpan.offsetWidth;
-            document.body.removeChild(tempSpan);
-
-            input.style.width = `${textWidth + 20}px`;
-            bubbleText.replaceWith(input);
-            input.focus();
-
-            const tagInput = () => {
-                const newTag = input.value.trim();
-                if (newTag && newTag !== tag && !tempTagsArray.includes(newTag)) {
-                    const tagIndex = tempTagsArray.indexOf(tag);
-                    if (tagIndex !== -1) {
-                        tempTagsArray[tagIndex] = newTag;
-                        //displayTagsAsBubbles(tempTagsArray, formContext);
-                    }
-                    bubbleText.textContent = newTag;
-                }
-                input.replaceWith(bubbleText);
-            };
-
-            input.addEventListener("blur", tagInput);
-            input.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    tagInput();
-                }
-            });
-        };
-        container.appendChild(bubble);
-    });
-    //display bubbles on HTML web resource 'WebResource_BubbleContainers'
-    const webResourceControl = formContext.getControl("WebResource_BubbleContainers");
+    const webResourceControl = formContext.getControl("WebResource_BubbleContainers"); //this section gains control over BubbleContainers.html (or 'WebResource_BubbleContainers' within the context of the form).
     if (webResourceControl) {
         const webResourceObject = webResourceControl.getObject();
         if (webResourceObject) {
@@ -173,28 +182,3 @@ function displayTagsAsBubbles(tags, formContext, tempTagsArray) {
         console.error("ERROR 1: Web resource control not found.");
     }
 }
-
-// function addTagToAccount(tag, formContext, tempTagsArray) {
-//     if (!tempTagsArray.includes(tag)) {
-//         tempTagsArray.push(tag);
-//         //displayTagsAsBubbles(tempTagsArray, formContext);
-//         console.log(`Tag "${tag}" added to temporary tags array.`);
-//     }
-// }
-
-// function removeTagFromAccount(tag, formContext, tempTagsArray) {
-//     tempTagsArray = tempTagsArray.filter(t => t !== tag);
-//     displayTagsAsBubbles(tempTagsArray, formContext);
-//     console.log(`Tag "${tag}" removed from temporary tags array.`);
-// }
-
-// function renameTagInAccount(oldTag, newTag, formContext, tempTagsArray) {
-//     const tagIndex = tempTagsArray.indexOf(oldTag);
-//     if (tagIndex !== -1 && !tempTagsArray.includes(newTag)) {
-//         tempTagsArray[tagIndex] = newTag;
-//         //displayTagsAsBubbles(tempTagsArray, formContext);
-//         console.log(`Tag "${oldTag}" renamed to "${newTag}" in temporary tags array.`);
-//     } else {
-//         console.error(`Tag "${oldTag}" not found in temporary tags array or new tag already exists.`);
-//     }
-// }
