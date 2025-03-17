@@ -1,57 +1,124 @@
-function onAddTagButtonClick() {
-    // Get selected accounts
-    let selectedAccounts = getSelectedAccounts(); // Function to get selected account IDs
+// function onAddTagButtonClick() {
+//     // Get selected accounts
+//     let selectedAccounts = getSelectedAccounts(); // Function to get selected account IDs
 
-    if (selectedAccounts.length > 0) {
-        // Display input box
-        let inputBox = document.createElement('input');
-        inputBox.type = 'text';
-        inputBox.placeholder = 'Enter tag';
-        document.body.appendChild(inputBox);
-        inputBox.focus();
+//     if (selectedAccounts.length > 0) {
+//         // Display input box
+//         let inputBox = document.createElement('input');
+//         inputBox.type = 'text';
+//         inputBox.placeholder = 'Enter tag';
+//         document.body.appendChild(inputBox);
+//         inputBox.focus();
 
-        // Function to handle input submission
-        function handleInputSubmission() {
-            let inputValue = inputBox.value.trim();
-            if (inputValue) {
-                // Append input value to each selected account's cr7e8_accounttags field
-                selectedAccounts.forEach(accountId => {
-                    let account = getAccountById(accountId); // Function to get account by ID
-                    account.cr7e8_accounttags += `, ${inputValue}`;
-                    updateAccount(account); // Function to update account
-                });
-            }
-            document.body.removeChild(inputBox); // Remove input box after use
-        }
+//         // Function to handle input submission
+//         function handleInputSubmission() {
+//             let inputValue = inputBox.value.trim();
+//             if (inputValue) {
+//                 // Append input value to each selected account's cr7e8_accounttags field
+//                 selectedAccounts.forEach(accountId => {
+//                     let account = getAccountById(accountId); // Function to get account by ID
+//                     account.cr7e8_accounttags += `, ${inputValue}`;
+//                     updateAccount(account); // Function to update account
+//                 });
+//             }
+//             document.body.removeChild(inputBox); // Remove input box after use
+//         }
 
-        // Handle blur event
-        inputBox.addEventListener('blur', handleInputSubmission);
+//         // Handle blur event
+//         inputBox.addEventListener('blur', handleInputSubmission);
 
-        // Handle enter key press
-        inputBox.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                handleInputSubmission();
-            }
-        });
-    } else {
-        alert('Please select at least one account.');
+//         // Handle enter key press
+//         inputBox.addEventListener('keydown', (event) => {
+//             if (event.key === 'Enter') {
+//                 handleInputSubmission();
+//             }
+//         });
+//     } else {
+//         alert('Please select at least one account.');
+//     }
+// }
+
+// // Helper functions (to be implemented)
+// function getSelectedAccounts() {
+//     // Logic to get selected account IDs
+//     return []; // Placeholder return
+// }
+
+// function getAccountById(id) {
+//     // Logic to get account by ID
+//     return {}; // Placeholder return
+// }
+
+// function updateAccount(account) {
+//     // Logic to update account
+// }
+
+// // Ensure this function is called when the button is clicked
+// onAddTagButtonClick();
+
+
+// function displayAccountNames() {
+//     Xrm.WebApi.retrieveMultipleRecords("account", "?$select=name").then(
+//         function success(result) {
+//             result.entities.forEach(function (account) {
+//                 var accountTags = account.cr7e8_accounttags;
+//                 if (accountTags) {
+//                     var tagsArray = accountTags.split(/[,;]/);
+//                     var tagFound = false;
+//                     var updatedTagsArray = tagsArray.map(function (tag) {
+//                         if (tag.trim() === originalTag) {
+//                             tagFound = true;
+//                             return newTag;
+//                         }
+//                         return tag;
+//                     });
+
+//                     if (tagFound) {
+//                         var updatedTags = updatedTagsArray.join(", ");
+
+//                         // Update the account record
+//                         var accountUpdate = {};
+//                         accountUpdate.cr7e8_accounttags = updatedTags;
+//                         Xrm.WebApi.updateRecord("account", account.accountid, accountUpdate).then(
+//                             //function success(result) {
+//                             //    alert("Updated Account Tags: " + updatedTags);
+//                             //},
+//                             function error(error) {
+//                                 console.log(error.message);
+//                             }
+//                         );
+//                     }
+//                 }
+//             });
+//         },
+//         function error(error) {
+//             console.log(error.message);
+//         }
+//     );
+// }
+// Function to fetch account names by IDs from PowerApps Dataverse using Xrm.WebApi.retrieveMultipleRecords
+async function getAccountNamesByIds(selectedItemIds) {
+    const entityLogicalName = "account";
+    const filter = selectedItemIds.map(id => `accountid eq ${id}`).join(" or ");
+    const options = `?$select=name&$filter=${filter}`;
+
+    try {
+        const result = await Xrm.WebApi.retrieveMultipleRecords(entityLogicalName, options);
+        const accountNames = result.entities.map(account => account.name);
+        return accountNames;
+    } catch (error) {
+        console.error("Error:", error);
+        return ["Unknown Account"];
     }
 }
 
-// Helper functions (to be implemented)
-function getSelectedAccounts() {
-    // Logic to get selected account IDs
-    return []; // Placeholder return
+// Function to handle selected item IDs
+async function handleSelectedItems(selectedItemIds) {
+    // Check if the selectedItemIds array is not empty
+    if (selectedItemIds && selectedItemIds.length > 0) {
+        const accountNames = await getAccountNamesByIds(selectedItemIds);
+        console.log("Selected Item IDs:", selectedItemIds, "Account Names:", accountNames);
+    } else {
+        console.log("No items selected.");
+    }
 }
-
-function getAccountById(id) {
-    // Logic to get account by ID
-    return {}; // Placeholder return
-}
-
-function updateAccount(account) {
-    // Logic to update account
-}
-
-// Ensure this function is called when the button is clicked
-onAddTagButtonClick();
