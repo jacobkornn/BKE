@@ -1,101 +1,3 @@
-// function onAddTagButtonClick() {
-//     // Get selected accounts
-//     let selectedAccounts = getSelectedAccounts(); // Function to get selected account IDs
-
-//     if (selectedAccounts.length > 0) {
-//         // Display input box
-//         let inputBox = document.createElement('input');
-//         inputBox.type = 'text';
-//         inputBox.placeholder = 'Enter tag';
-//         document.body.appendChild(inputBox);
-//         inputBox.focus();
-
-//         // Function to handle input submission
-//         function handleInputSubmission() {
-//             let inputValue = inputBox.value.trim();
-//             if (inputValue) {
-//                 // Append input value to each selected account's cr7e8_accounttags field
-//                 selectedAccounts.forEach(accountId => {
-//                     let account = getAccountById(accountId); // Function to get account by ID
-//                     account.cr7e8_accounttags += `, ${inputValue}`;
-//                     updateAccount(account); // Function to update account
-//                 });
-//             }
-//             document.body.removeChild(inputBox); // Remove input box after use
-//         }
-
-//         // Handle blur event
-//         inputBox.addEventListener('blur', handleInputSubmission);
-
-//         // Handle enter key press
-//         inputBox.addEventListener('keydown', (event) => {
-//             if (event.key === 'Enter') {
-//                 handleInputSubmission();
-//             }
-//         });
-//     } else {
-//         alert('Please select at least one account.');
-//     }
-// }
-
-// // Helper functions (to be implemented)
-// function getSelectedAccounts() {
-//     // Logic to get selected account IDs
-//     return []; // Placeholder return
-// }
-
-// function getAccountById(id) {
-//     // Logic to get account by ID
-//     return {}; // Placeholder return
-// }
-
-// function updateAccount(account) {
-//     // Logic to update account
-// }
-
-// // Ensure this function is called when the button is clicked
-// onAddTagButtonClick();
-
-
-// function displayAccountNames() {
-//     Xrm.WebApi.retrieveMultipleRecords("account", "?$select=name").then(
-//         function success(result) {
-//             result.entities.forEach(function (account) {
-//                 var accountTags = account.cr7e8_accounttags;
-//                 if (accountTags) {
-//                     var tagsArray = accountTags.split(/[,;]/);
-//                     var tagFound = false;
-//                     var updatedTagsArray = tagsArray.map(function (tag) {
-//                         if (tag.trim() === originalTag) {
-//                             tagFound = true;
-//                             return newTag;
-//                         }
-//                         return tag;
-//                     });
-
-//                     if (tagFound) {
-//                         var updatedTags = updatedTagsArray.join(", ");
-
-//                         // Update the account record
-//                         var accountUpdate = {};
-//                         accountUpdate.cr7e8_accounttags = updatedTags;
-//                         Xrm.WebApi.updateRecord("account", account.accountid, accountUpdate).then(
-//                             //function success(result) {
-//                             //    alert("Updated Account Tags: " + updatedTags);
-//                             //},
-//                             function error(error) {
-//                                 console.log(error.message);
-//                             }
-//                         );
-//                     }
-//                 }
-//             });
-//         },
-//         function error(error) {
-//             console.log(error.message);
-//         }
-//     );
-// }
 // Function to fetch account names by IDs from PowerApps Dataverse using Xrm.WebApi.retrieveMultipleRecords
 async function getAccountNamesByIds(selectedItemIds) {
     const entityLogicalName = "account";
@@ -112,12 +14,85 @@ async function getAccountNamesByIds(selectedItemIds) {
     }
 }
 
+function collectInput() {
+    //console.log("Bubble double-clicked for tag:", tag);
+    const rect = commandButton.getBoundingClientRect();
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = tag;
+    input.className = "edit-input";
+    input.style.fontFamily = "'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif";
+    input.style.fontSize = "14px";
+    input.style.border = "none";
+    input.style.outline = "none";
+    input.style.height = "100%";
+    input.style.backgroundColor = "#ffffff";
+    input.style.padding = "0 10px";
+
+    const tempSpan = document.createElement("span");
+    tempSpan.style.fontFamily = input.style.fontFamily;
+    tempSpan.style.fontSize = input.style.fontSize;
+    tempSpan.style.visibility = "hidden";
+    tempSpan.style.position = "absolute";
+    tempSpan.textContent = input.value;
+    document.body.appendChild(tempSpan);
+    const textWidth = tempSpan.offsetWidth;
+    document.body.removeChild(tempSpan);
+
+    input.style.width = `${textWidth + 20}px`;
+
+    // Position the input bubble below the command button
+    input.style.position = "absolute";
+    input.style.top = `${rect.bottom + window.scrollY}px`;
+    input.style.left = `${rect.left + window.scrollX}px`;
+
+    document.body.appendChild(input);
+    input.focus();
+
+    const tagInput = () => {
+        const updatedTag = input.value.trim();
+        if (updatedTag && updatedTag !== tag && !tempTagsArray.includes(updatedTag)) {
+            const tagIndex = tempTagsArray.indexOf(tag);
+            if (tagIndex !== -1) {
+                tempTagsArray[tagIndex] = updatedTag;
+                bubbleText.textContent = updatedTag;
+            }
+        }
+        input.replaceWith(bubbleText);
+    };
+
+    input.addEventListener("blur", tagInput);
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            tagInput();
+        }
+    });
+};
+
 // Function to handle selected item IDs
 async function handleSelectedItems(selectedItemIds) {
     // Check if the selectedItemIds array is not empty
     if (selectedItemIds && selectedItemIds.length > 0) {
         const accountNames = await getAccountNamesByIds(selectedItemIds);
         console.log("Selected Item IDs:", selectedItemIds, "Account Names:", accountNames);
+
+        // Display the account names in a side pane
+        const paneOptions = {
+            title: "Selected Accounts",
+            canClose: true,
+            width: 300
+        };
+
+        const paneContent = `
+            <div>
+                <h2>Selected Accounts</h2>
+                <ul>
+                    ${accountNames.map(name => `<li>${name}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+
+        Xrm.Panel.loadPanel(paneOptions, paneContent);
     } else {
         console.log("No items selected.");
     }
