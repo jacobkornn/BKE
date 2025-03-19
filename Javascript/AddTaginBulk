@@ -14,7 +14,9 @@ async function getAccountNamesByIds(selectedItemIds) {
     }
 }
 
-function openCustomPane() {
+function openCustomPane(selectedItemIds) {
+    const viewId = "735b875d-3304-f011-bae3-000d3a9857fe"; // Set the view ID to "Edit Tags". This custom view will act as a sidepane
+    
     Xrm.App.sidePanes.createPane({
         title: "Edit Tags",
         paneId: "EditTags",
@@ -23,18 +25,21 @@ function openCustomPane() {
         pane.navigate({
             pageType: "entitylist",
             entityName: "cr7e8_tags",
-        })
+            viewId: viewId, // Specify the view ID here
+            data: {
+                selectedAccountIds: selectedItemIds
+            }
+        });
     });
-  }
-  
+}
+
 // Function to handle selected item IDs
 async function handleSelectedItems(selectedItemIds) {
     // Check if the selectedItemIds array is not empty
     if (selectedItemIds && selectedItemIds.length > 0) {
         const accountNames = await getAccountNamesByIds(selectedItemIds);
         console.log("Selected Item IDs:", selectedItemIds, "Account Names:", accountNames);
-        openCustomPane();
-
+        openCustomPane(selectedItemIds);
     } else {
         console.log("No items selected.");
     }
