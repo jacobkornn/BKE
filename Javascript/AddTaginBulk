@@ -14,25 +14,16 @@ async function getAccountNamesByIds(selectedItemIds) {
     }
 }
 
-function openCustomPagePane() {
-    console.log("Inside the openCustomPagePane function")
-    var pageInput = {
-      pageType: "custom",
-      name: "new_tagbulkedit_777ed"
-    };
-  
-    var navigationOptions = {
-      target: 2, // 2 for side pane
-      position: 1, // 1 for right side
-      width: { value: 300, unit: "px" } // Width of the side pane
-    };
-  
-    Xrm.Navigation.navigateTo(pageInput, navigationOptions).then(function () {
-        console.log("Page successfully opened")
-      // Called when the page opens
-    }).catch(function (error) {
-      // Handle any errors
-      console.log("Page open not successful");
+function openCustomPane() {
+    Xrm.App.sidePanes.createPane({
+        title: "Edit Tags",
+        paneId: "EditTags",
+        canClose: true
+    }).then((pane) => {
+        pane.navigate({
+            pageType: "entitylist",
+            entityName: "cr7e8_tags",
+        })
     });
   }
   
@@ -42,7 +33,7 @@ async function handleSelectedItems(selectedItemIds) {
     if (selectedItemIds && selectedItemIds.length > 0) {
         const accountNames = await getAccountNamesByIds(selectedItemIds);
         console.log("Selected Item IDs:", selectedItemIds, "Account Names:", accountNames);
-        openCustomPagePane();
+        openCustomPane();
 
     } else {
         console.log("No items selected.");
