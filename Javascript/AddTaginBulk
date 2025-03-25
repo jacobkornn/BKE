@@ -1,33 +1,35 @@
-// Function to fetch account names by IDs from PowerApps Dataverse using Xrm.WebApi.retrieveMultipleRecords
-async function getAccountNamesByIds(selectedItemIds) {
-    const entityLogicalName = "account";
-    const filter = selectedItemIds.map(id => `accountid eq ${id}`).join(" or ");
-    const options = `?$select=name&$filter=${filter}`;
-
+async function saveSelectedAccounts(selectedItemIds) {
+    var entity = {
+        "new_selecteditems": selectedItemIds.join(", ")
+    };
     try {
-        const result = await Xrm.WebApi.retrieveMultipleRecords(entityLogicalName, options);
-        const accountNames = result.entities.map(account => account.name);
-        return accountNames;
+        // Retrieve the row in the 'new_selecteditems' table where new_selecteditemsid equals the specified value. 
+        // The GUID provided below is the first row in the new_selecteditems table, dedicated to account entities only.a
+        let existingRecords = await Xrm.WebApi.retrieveMultipleRecords("new_selecteditems", "?$filter=new_selecteditemsid eq 'a034b1ee-9e61-4b13-aaa8-3971f3d77cd3'");
+    
+        if (existingRecords.entities.length > 0) {
+            // Update the row that matches the filter
+            let recordId = existingRecords.entities[0].new_selecteditemsid;
+            await Xrm.WebApi.updateRecord("new_selecteditems", recordId, entity);
+            console.log("Record updated with ID: " + recordId);
+        } else {
+            console.log("No records found with the specified filter.");
+        }
     } catch (error) {
-        console.error("Error:", error);
-        return ["Unknown Account"];
+        console.error("Error updating selected accounts:", error);
     }
 }
 
 function openCustomPane(selectedItemIds) {
-    
+    // Store the selected item IDs in a global variable
+
     Xrm.App.sidePanes.createPane({
-        //title: "Enter Tag Name",
-        //paneId: "EnterTagName",
         hideHeader: true,
         canClose: true
     }).then((pane) => {
         pane.navigate({
             pageType: "custom",
-            name: "new_entertagname_c2c6f",
-            data: {
-                selectedItemIds: selectedItemIds
-            }
+            name: "new_entertagname_c2c6f"
         });
     });
 }
@@ -36,8 +38,7 @@ function openCustomPane(selectedItemIds) {
 async function handleSelectedItems(selectedItemIds) {
     // Check if the selectedItemIds array is not empty
     if (selectedItemIds && selectedItemIds.length > 0) {
-        const accountNames = await getAccountNamesByIds(selectedItemIds);
-        console.log("Selected Item IDs:", selectedItemIds, "Account Names:", accountNames);
+        saveSelectedAccounts(selectedItemIds);
         openCustomPane(selectedItemIds);
     } else {
         console.log("No items selected.");
