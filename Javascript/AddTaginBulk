@@ -15,7 +15,6 @@ async function getAccountNamesByIds(selectedItemIds) {
 }
 
 function openCustomPane(selectedItemIds) {
-    //const viewId = "735b875d-3304-f011-bae3-000d3a9857fe"; // Set the view ID to "Edit Tags". This custom view will act as a sidepane
     
     Xrm.App.sidePanes.createPane({
         //title: "Enter Tag Name",
@@ -26,9 +25,8 @@ function openCustomPane(selectedItemIds) {
         pane.navigate({
             pageType: "custom",
             name: "new_entertagname_c2c6f",
-            //viewId: viewId, // Specify the view ID here
             data: {
-                selectedAccountIds: selectedItemIds
+                selectedItemIds: selectedItemIds
             }
         });
     });
