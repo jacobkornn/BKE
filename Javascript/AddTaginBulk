@@ -1,11 +1,11 @@
 async function saveSelectedAccounts(selectedItemIds) {
     var entity = {
-        "new_selecteditems": selectedItemIds.join(", ")
+        "new_selecteditemsguids": selectedItemIds.join(", ")
     };
     try {
-        // Retrieve the row in the 'new_selecteditems' table where new_selecteditemsid equals the specified value. 
-        // The GUID provided below is the first row in the new_selecteditems table, dedicated to account entities only.a
-        let existingRecords = await Xrm.WebApi.retrieveMultipleRecords("new_selecteditems", "?$filter=new_selecteditemsid eq 'a034b1ee-9e61-4b13-aaa8-3971f3d77cd3'");
+        // Retrieve the row in the 'new_selecteditems' table where new_selecteditemsid equals the specified value.
+        // The specified GUID value is the first row in the new_selecteditems table, dedicated to account entities only.
+        let existingRecords = await Xrm.WebApi.retrieveMultipleRecords("new_selecteditems", "?$filter=new_selecteditemsid eq '4c6a2b28-b909-f011-bae3-000d3a9857fe'");
     
         if (existingRecords.entities.length > 0) {
             // Update the row that matches the filter
@@ -25,11 +25,12 @@ function openCustomPane(selectedItemIds) {
 
     Xrm.App.sidePanes.createPane({
         hideHeader: true,
-        canClose: true
+        canClose: true,
+        id: "TagPane"
     }).then((pane) => {
         pane.navigate({
             pageType: "custom",
-            name: "new_entertagname_c2c6f"
+            name: "new_selecttag_9e742"
         });
     });
 }
