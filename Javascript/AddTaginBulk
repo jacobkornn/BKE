@@ -20,19 +20,20 @@ async function saveSelectedAccounts(selectedItemIds) {
     }
 }
 
-function openCustomPane(selectedItemIds) {
+function openCustomPane() {
     // Store the selected item IDs in a global variable
-
-    Xrm.App.sidePanes.createPane({
-        hideHeader: true,
-        canClose: true,
-        id: "TagPane"
-    }).then((pane) => {
-        pane.navigate({
-            pageType: "custom",
-            name: "new_selecttag_9e742"
-        });
-    });
+    Xrm.Navigation.navigateTo({ 
+        pageType: "custom",  
+        name: "new_selecttag_9e742",
+     }, {
+        title: ' ', 
+        target: 2, 
+        position: 2,
+        width: 300, 
+        height: 400
+     })
+    .then(console.log)
+    .catch(console.error);
 }
 
 // Function to handle selected item IDs

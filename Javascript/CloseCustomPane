@@ -1,5 +1,6 @@
 function closeCustomPane() {
     var pane = Xrm.App.sidePanes.getPane("TagPane");
+    console.log("Made it to closeCustomPane()");
     if (pane) {
         pane.close();
     }
