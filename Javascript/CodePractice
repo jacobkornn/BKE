@@ -1,0 +1,17 @@
+int nums[] = {2, 3, 4, 5};
+
+int target = 5;
+
+var numsMap = new Dictionary<int, int>();
+
+for (int i = 0; i < nums.Length; i ++) {
+    int complement = target - nums[i];
+    if (numsMap.ContainsKey(complement)){
+        Console.WriteLine(numsMap[complement].ToString, i);
+    }
+    else
+    {
+        numsMap.TryAdd(nums[i], i);
+    }
+    Console.WriteLine();
+}
