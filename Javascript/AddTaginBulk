@@ -1,3 +1,5 @@
+let isPaneOpen = false;
+
 async function saveSelectedAccounts(selectedItemIds) {
     var entity = {
         "new_selecteditemsguids": selectedItemIds.join(", ")
@@ -20,6 +22,34 @@ async function saveSelectedAccounts(selectedItemIds) {
     }
 }
 
+function searchForButtons() {
+    console.log("Made it inside search function");
+    if (isPaneOpen) {
+        // Target the custom pane container
+        const customPanes = document.getElementsByClassName("customPaneContainer"); // Adjust the class name as needed
+        if (customPanes.length > 0) {
+            const customPane = customPanes[0]; // Assuming the first container is the one you want
+            // Look for the button with class name "AddTag" within the custom pane
+            const addTagButtons = customPane.getElementsByClassName("AddTag");
+            if (addTagButtons.length > 0) {
+                console.log("AddTag button found:", addTagButtons[0]);
+            } else {
+                console.log("AddTag button not found");
+            }
+
+            // Print the IDs of all buttons within the custom pane
+            const buttons = customPane.getElementsByTagName("button");
+            for (let button of buttons) {
+                console.log("Button ID:", button.id);
+            }
+        } else {
+            console.log("Custom pane not found");
+        }
+    } else {
+        console.log("Custom pane is not open yet");
+    }
+}
+
 function openCustomPane() {
     // Store the selected item IDs in a global variable
     Xrm.Navigation.navigateTo({ 
@@ -32,7 +62,10 @@ function openCustomPane() {
         width: 300, 
         height: 400
      })
-    .then(console.log)
+    .then(() => {
+        console.log("Custom pane opened successfully");
+        isPaneOpen = true;
+    })
     .catch(console.error);
 }
 
@@ -42,6 +75,7 @@ async function handleSelectedItems(selectedItemIds) {
     if (selectedItemIds && selectedItemIds.length > 0) {
         saveSelectedAccounts(selectedItemIds);
         openCustomPane(selectedItemIds);
+        searchForButtons();
     } else {
         console.log("No items selected.");
     }

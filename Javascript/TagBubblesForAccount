@@ -2,7 +2,7 @@
 let tempTagsArray = [];
    
 /*
-This function is called by BubbleContainers.html (or 'WebResource_BubbleContainers' within the context of the form).
+This function is called by AccountForm.html (or 'WebResource_AccountFormDisplay' within the context of the form).
 to ensure the code only runs once the HTML is loaded. As a result, this code is not used as a traditional event handler in the form editor,
 but is accessed by the HTML instead, through the application's web resource library. 
 */
@@ -161,7 +161,7 @@ function displayTagsAsBubbles(formContext) {
 
     tempTagsArray.forEach(tag => createBubble(tag, container));
 
-    const webResourceControl = formContext.getControl("WebResource_BubbleContainers"); //this section gains control over BubbleContainers.html (or 'WebResource_BubbleContainers' within the context of the form).
+    const webResourceControl = formContext.getControl("WebResource_AccountFormDisplay");
     if (webResourceControl) {
         const webResourceObject = webResourceControl.getObject();
         if (webResourceObject) {
