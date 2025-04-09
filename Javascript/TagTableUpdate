@@ -1,0 +1,62 @@
+var originalTag; // Global variable to store the original tag
+
+// Function to run on load
+function onLoad(executionContext) {
+    var formContext = executionContext.getFormContext();
+    originalTag = formContext.getAttribute("cr7e8_tagname").getValue();
+    var tagCount = formContext.getAttribute("new_tagcount").getValue();
+    if (tagCount === null) {
+        tagCount = 0;
+    }
+    console.log("tag count: ", tagCount);
+    formContext.data.entity.attributes.get("cr7e8_tagname").addOnChange(onChange);
+}
+
+// Function to run on change
+function onChange(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var newTag = formContext.getAttribute("cr7e8_tagname").getValue();
+
+    alert("New Tag: " + newTag);
+
+    // Fetch all accounts
+    Xrm.WebApi.retrieveMultipleRecords("account", "?$select=cr7e8_accounttags").then(
+        function success(result) {
+            result.entities.forEach(function (account) {
+                var accountTags = account.cr7e8_accounttags;
+                if (accountTags) {
+                    var tagsArray = accountTags.split(/[,;]/);
+                    var tagFound = false;
+                    var updatedTagsArray = tagsArray.map(function (tag) {
+                        if (tag.trim() === originalTag) {
+                            tagFound = true;
+                            return newTag;
+                        }
+                        return tag;
+                    });
+
+                    if (tagFound) {
+                        var updatedTags = updatedTagsArray.join(", ");
+
+                        // Update the account record
+                        var accountUpdate = {};
+                        accountUpdate.cr7e8_accounttags = updatedTags;
+                        Xrm.WebApi.updateRecord("account", account.accountid, accountUpdate).then(
+                            //function success(result) {
+                            //    alert("Updated Account Tags: " + updatedTags);
+                            //},
+                            function error(error) {
+                                console.log(error.message);
+                            }
+                        );
+                    }
+                }
+            });
+        },
+        function error(error) {
+            console.log(error.message);
+        }
+    );
+}
+
+

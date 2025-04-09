@@ -1,0 +1,53 @@
+async function handleDelete(FirstPrimaryItemId) {
+    const tagName = (await Xrm.WebApi.retrieveMultipleRecords("cr7e8_tags", `?$filter=cr7e8_tagsid eq '${FirstPrimaryItemId}'&$select=cr7e8_tagname`)).entities[0].cr7e8_tagname;
+    try {
+        // Call findAccounts function
+        const accountGuids = await findAccounts(FirstPrimaryItemId);
+        
+        // Log the returned value of accountGuids
+        console.log('Account GUIDs:', accountGuids);
+        
+        // Call deleteFromAccountTags function
+        await deleteFromAccountTags(accountGuids, tagName);
+    } catch (error) {
+        console.error('Error in handleDelete:', error);
+    }
+}
+
+async function findAccounts(FirstPrimaryItemId) {
+    const accountGuids = [];
+    try {
+        // Query the cr7e8_tags table
+        const tagsRecords = await Xrm.WebApi.retrieveMultipleRecords("cr7e8_tags", `?$filter=cr7e8_tagsid eq '${FirstPrimaryItemId}'&$select=new_accountsusingtag`);
+        
+        if (tagsRecords.entities.length > 0) {
+            const new_accountsusingtag = tagsRecords.entities[0].new_accountsusingtag;
+            accountGuids.push(...new_accountsusingtag.split(', '));
+        }
+    } catch (error) {
+        console.error('Error in findAccounts:', error);
+    }
+    return accountGuids;
+}
+
+async function deleteFromAccountTags(accountGuids, tagName) {
+    try {
+        for (const accountGuid of accountGuids) {
+            // Query the account table
+            const accountRecords = await Xrm.WebApi.retrieveMultipleRecords("account", `?$filter=accountid eq '${accountGuid}'&$select=cr7e8_accounttags`);
+            
+            if (accountRecords.entities.length > 0) {
+                const cr7e8_accounttags = accountRecords.entities[0].cr7e8_accounttags;
+                const tags = cr7e8_accounttags.split(', ');
+                const updatedTags = tags.filter(tag => tag !== tagName);
+                
+                // Update the cr7e8_accounttags column
+                await Xrm.WebApi.updateRecord("account", accountGuid, {
+                    cr7e8_accounttags: updatedTags.join(', ')
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error in deleteFromAccountTags:', error);
+    }
+}

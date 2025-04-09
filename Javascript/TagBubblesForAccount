@@ -171,7 +171,7 @@ function displayTagsAsBubbles(formContext) {
                     webResourceElement.body.innerHTML = '';
                     webResourceElement.body.appendChild(container);
                 } else {
-                    console.error("ERROR 4: Web resource element still not found after load.");
+                    console.error("ERROR 3: Web resource element still not found after load.");
                 }
             }
             appendBubbles();

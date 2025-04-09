@@ -63,17 +63,7 @@
     </style>
     <script type="text/javascript" src="new_TagBubblesForAccount"></script>
 </head>
-<body onload="
-    var formContext = window.parent.Xrm.Page;
-    var formType = formContext.ui.getFormType();
-    console.log(formType);
-
-    if (formType === 2) {
-        console.log('Form is in Edit mode.');
-    } else {
-        console.log('Form is in another mode.');
-        formOnLoad();
-    }"> 
+<body onload="formOnLoad()"> 
     <div id="bubblesContainer" class="bubble-container"></div>
 </body>
 </html>
