@@ -1,14 +1,53 @@
 async function handleDelete(FirstPrimaryItemId) {
     const tagName = (await Xrm.WebApi.retrieveMultipleRecords("cr7e8_tags", `?$filter=cr7e8_tagsid eq '${FirstPrimaryItemId}'&$select=cr7e8_tagname`)).entities[0].cr7e8_tagname;
+    
+    // Open confirmation dialog
+    const confirmResult = await Xrm.Navigation.openConfirmDialog({
+        title: "Delete this tag from all records?",
+        text: "This action cannot be undone.",
+        confirmButtonLabel: "Delete",
+        cancelButtonLabel: "Cancel"
+    });
+
+    if (!confirmResult.confirmed) {
+        // User canceled the action
+        return;
+    }
+
     try {
-        // Call findAccounts function
+        // Get the accounts using this tag
         const accountGuids = await findAccounts(FirstPrimaryItemId);
         
-        // Log the returned value of accountGuids
-        console.log('Account GUIDs:', accountGuids);
-        
-        // Call deleteFromAccountTags function
+        // Delete tag from all accounts where it's being used
         await deleteFromAccountTags(accountGuids, tagName);
+
+        // Delete the tag row from cr7e8_tags table
+        await deleteTagRow(FirstPrimaryItemId);
+
+        // Navigate to the previous page
+        await Xrm.Navigation.navigateTo({
+            pageType: "entitylist",
+            entityName: "cr7e8_tags"
+        });
+        
+        Xrm.App.addGlobalNotification({
+            type: 2,
+            level: 4,
+            message: `${tagName} tag successfully deleted from all records`,
+            action: null,
+            data: null
+        }).then(
+            function success(result) {
+                window.setTimeout(function () { 
+                    Xrm.App.clearGlobalNotification(result); 
+                }, 5000);
+            },
+            function (error) {
+                console.log(error.message);
+            }
+        );
+
+        
     } catch (error) {
         console.error('Error in handleDelete:', error);
     }
@@ -49,5 +88,13 @@ async function deleteFromAccountTags(accountGuids, tagName) {
         }
     } catch (error) {
         console.error('Error in deleteFromAccountTags:', error);
+    }
+}
+
+async function deleteTagRow(tagId) {
+    try {
+        await Xrm.WebApi.deleteRecord("cr7e8_tags", tagId);
+    } catch (error) {
+        console.error('Error in deleteTagRow:', error);
     }
 }
