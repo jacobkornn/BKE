@@ -1,47 +1,69 @@
+import os
+import logging
 import json
 import numpy as np
-import pandas as pd
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# Global variables for model and vectorizer
+# Initialize global objects
 model = None
-tfidf = None
+tfidf_vectorizer = None
 
 def init():
-    """Initialize the model and vectorizer by loading them from disk."""
-    global model, tfidf
-    model = joblib.load('jobTitlesRandomForestModel.pkl')
-    tfidf = joblib.load('tfidf_vectorizer.pkl')
+    """
+    This function is called when the container is initialized, typically after deployment.
+    It loads the trained model and initializes necessary components for inference.
+    """
+    global model, tfidf_vectorizer
+    
+    model_dir = os.getenv("AZUREML_MODEL_DIR")
+    model_path = os.path.join(model_dir, "jobTitlesRandomForestModel.pkl")
+    vectorizer_path = os.path.join(model_dir, "tfidf_vectorizer.pkl")
+
+    # Load the trained model
+    model = joblib.load(model_path)
+    
+    # Load the trained TF-IDF vectorizer
+    tfidf_vectorizer = joblib.load(vectorizer_path)
+    
+    logging.info("Model and vectorizer loaded successfully.")
 
 def run(raw_data):
-    """Run inference on the input job titles."""
+    """
+    This function is called for each invocation of the endpoint.
+    It extracts input data, preprocesses it, and returns predictions from the model.
+    """
     try:
-        # Parse incoming JSON request
-        job_titles = json.loads(raw_data)['job_titles']
-        jobTitles_df = pd.DataFrame({'jobtitle': job_titles})
+        logging.info("Request received")
+        
+        # Parse input JSON data
+        data = json.loads(raw_data)
+        job_titles = data["jobtitles"]
+        
+        # Transform job titles using the TF-IDF vectorizer
+        X_tfidf = tfidf_vectorizer.transform(job_titles).toarray()
+        
+        # Feature Engineering
+        def categorize_job_title(title):
+            return [
+                int(any(keyword in title for keyword in ["Technician", "Clerk", "Analyst"])),  # Individual Contributor
+                int(any(keyword in title for keyword in ["Supervisor", "Lead"])),  # Lower Management
+                int(any(keyword in title for keyword in ["Manager", "Superintendent"])),  # Middle Management
+                int(any(keyword in title for keyword in ["Director", "Vice President", "President"])),  # Upper Management
+                int(any(keyword in title for keyword in ["CEO", "CFO", "CTO", "Chief", "Executive"]))  # Executive
+            ]
 
-        # Apply TF-IDF transformation
-        X_tfidf = tfidf.transform(jobTitles_df['jobtitle'])
+        features = np.array([categorize_job_title(title) for title in job_titles])
+        
+        # Combine TF-IDF features with categorical features
+        X_final = np.hstack((X_tfidf, features))
 
-        # Feature Engineering (same logic as training)
-        jobTitles_df['is_individual_contributor'] = jobTitles_df['jobtitle'].apply(lambda x: 1 if any(title in x for title in ['Technician', 'Clerk', 'Analyst']) else 0)
-        jobTitles_df['is_lower_management'] = jobTitles_df['jobtitle'].apply(lambda x: 1 if any(title in x for title in ['Supervisor', 'Lead']) else 0)
-        jobTitles_df['is_middle_management'] = jobTitles_df['jobtitle'].apply(lambda x: 1 if any(title in x for title in ['Manager', 'Superintendent']) else 0)
-        jobTitles_df['is_upper_management'] = jobTitles_df['jobtitle'].apply(lambda x: 1 if any(title in x for title in ['Director', 'Vice President', 'President']) else 0)
-        jobTitles_df['is_exec'] = jobTitles_df['jobtitle'].apply(lambda x: 1 if any(title in x for title in ['CEO', 'CFO', 'CTO', 'Chief', 'Executive']) else 0)
+        # Perform prediction
+        predictions = model.predict(X_final).tolist()
 
-        # Combine features
-        X = np.hstack((X_tfidf.toarray(), jobTitles_df[['is_individual_contributor', 'is_lower_management', 'is_middle_management', 'is_upper_management', 'is_exec']].values))
-
-        # Make predictions
-        predictions = model.predict(X)
-
-        # Convert numeric predictions to labels
-        seniority_mapping = {0: 'Individual Contributor', 1: 'Lower Management', 2: 'Middle Management', 3: 'Upper Management', 4: 'Executive'}
-        predicted_labels = [seniority_mapping[pred] for pred in predictions]
-
-        return json.dumps({"predictions": predicted_labels})
+        logging.info("Inference completed successfully")
+        return json.dumps({"predictions": predictions})
 
     except Exception as e:
+        logging.error(f"Error during inference: {str(e)}")
         return json.dumps({"error": str(e)})
