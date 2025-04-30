@@ -21,7 +21,7 @@ function InitializeTagContainers(formContext) {
     console.log("Initializing form");
     tempTagsArray = tagTransform(formContext);
     //console.log(tempTagsArray);
-    displayTagsAsBubbles(formContext);
+    displayTagsAsBubbles(formContext); 
 }
 
 function tagTransform(formContext) {
