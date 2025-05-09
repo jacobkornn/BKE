@@ -1,72 +1,47 @@
-# Import libraries
 import joblib
 import numpy as np
 import json
 import os
 import csv
 from azureml.core.model import Model
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-# Seniority mapping: numbers to labels
-SENIORITY_MAPPING = {
-    0: "Individual Contributor",
-    1: "Lower Management",
-    2: "Middle Management",
-    3: "Upper Management",
-    4: "Executive"
-}
-
-# Called when the service is loaded
+# Load model and vectorizer
 def init():
-    global model
-    # Retrieve the path to the model file
+    global model, vectorizer
     model_path = Model.get_model_path("jobTitlesRandomForestModel.pkl")
+    vectorizer_path = Model.get_model_path("tfidf_vectorizer.pkl")
     model = joblib.load(model_path)
+    vectorizer = joblib.load(vectorizer_path)
 
-# Function to convert CSV to JSON and dynamically engineer features
+# Seniority mapping
+SENIORITY_MAPPING = {0: "Individual Contributor", 1: "Lower Management", 2: "Middle Management", 3: "Upper Management", 4: "Executive"}
+
+# Convert CSV input to JSON
 def csv_to_json(csv_file_path):
-    # Read the CSV file
     with open(csv_file_path, mode='r') as csv_file:
         csv_reader = csv.DictReader(csv_file)
-        data = list(csv_reader)
+        jobtitles = [row["jobtitle"] for row in csv_reader]
+    return {"jobtitles": jobtitles}
 
-    # Transform data and engineer features
-    json_data = {"data": [], "jobtitles": []}
-    for row in data:
-        json_data["jobtitles"].append(row["jobtitle"])  # Store job titles for printing
-        features = [
-            1 if any(title in row["jobtitle"] for title in ["Technician", "Clerk", "Analyst"]) else 0,
-            1 if any(title in row["jobtitle"] for title in ["Supervisor", "Lead"]) else 0,
-            1 if any(title in row["jobtitle"] for title in ["Manager", "Superintendent"]) else 0,
-            1 if any(title in row["jobtitle"] for title in ["Director", "Vice President", "President"]) else 0,
-            1 if any(title in row["jobtitle"] for title in ["CEO", "CFO", "CTO", "Chief", "Executive"]) else 0
-        ]
-        json_data["data"].append(features)
-    
-    return json_data
-
-# Called when a request is received
+# Handle requests
 def run(raw_data):
     try:
-        # Parse input JSON data
-        if raw_data.endswith(".csv"):  # If the input is a CSV file
+        if raw_data.endswith(".csv"):
             json_data = csv_to_json(raw_data)
+        elif isinstance(raw_data, str):  
+            json_data = {"jobtitles": [raw_data]}
         else:
             json_data = json.loads(raw_data)
         
-        features = np.array(json_data["data"])
-        jobtitles = json_data["jobtitles"]
+        # Transform input using TF-IDF
+        features = vectorizer.transform(json_data["jobtitles"])
         
-        # Perform prediction
+        # Predict seniority
         predictions = model.predict(features)
-        
-        # Map numeric predictions to labels
         mapped_predictions = [SENIORITY_MAPPING[pred] for pred in predictions]
-        
-        # Combine job titles with predictions for formatted output
-        result = []
-        for jobtitle, seniority in zip(jobtitles, mapped_predictions):
-            result.append(f"{jobtitle}: {seniority}")
-        
+
+        result = [f"{jobtitle}: {seniority}" for jobtitle, seniority in zip(json_data["jobtitles"], mapped_predictions)]
         return {"predictions": result}
     except Exception as e:
         return {"error": str(e)}
