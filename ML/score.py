@@ -3,19 +3,39 @@ import numpy as np
 import json
 import os
 import csv
-from azureml.core.model import Model
+from azureml.core import Model
+from azure.ai.ml import MLClient
+from azure.identity import DefaultAzureCredential
+from azure.ai.ml.entities import Data
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# Load model and vectorizer
+# Seniority mapping
+SENIORITY_MAPPING = {
+    0: "Individual Contributor",
+    1: "Lower Management",
+    2: "Middle Management",
+    3: "Upper Management",
+    4: "Executive"
+}
+
+# Load model and vectorizer using Azure ML SDK
 def init():
     global model, vectorizer
-    model_path = Model.get_model_path("jobTitlesRandomForestModel.pkl")
-    vectorizer_path = Model.get_model_path("tfidf_vectorizer.pkl")
+    
+    # Authenticate with Azure ML
+    ml_client = MLClient(DefaultAzureCredential(), "c6eda382-a7f1-43d0-a66c-3b0ed8905988", "JakeGroup", "JakeWS-AzureSponsorship")
+    
+    # Retrieve model path
+    model_asset = ml_client.models.get(name="jobtitles_randomforest", version="1")
+    model_path = model_asset.path
+
+    # Retrieve data asset (TF-IDF vectorizer) path
+    data_asset = ml_client.data.get(name="TF-IDF-vectorizer", version="1")
+    vectorizer_path = data_asset.path
+    
+    # Load model and vectorizer
     model = joblib.load(model_path)
     vectorizer = joblib.load(vectorizer_path)
-
-# Seniority mapping
-SENIORITY_MAPPING = {0: "Individual Contributor", 1: "Lower Management", 2: "Middle Management", 3: "Upper Management", 4: "Executive"}
 
 # Convert CSV input to JSON
 def csv_to_json(csv_file_path):
