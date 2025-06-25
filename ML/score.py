@@ -6,7 +6,6 @@ import csv
 from azureml.core import Model
 from azure.ai.ml import MLClient
 from azure.identity import DefaultAzureCredential
-from azure.ai.ml.entities import Data
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Seniority mapping
@@ -25,14 +24,13 @@ def init():
     # Authenticate with Azure ML
     ml_client = MLClient(DefaultAzureCredential(), "c6eda382-a7f1-43d0-a66c-3b0ed8905988", "JakeGroup", "JakeWS-AzureSponsorship")
     
-    # Retrieve model path
-    model_asset = ml_client.models.get(name="jobtitles_randomforest", version="1")
-    model_path = model_asset.path
-
-    # Retrieve data asset (TF-IDF vectorizer) path
+    # Retrieve model path from registered models
+    model_path = Model.get_model_path("jobtitles_randomforest")
+    
+    # Retrieve vectorizer path as a data asset
     data_asset = ml_client.data.get(name="TF-IDF-vectorizer", version="1")
     vectorizer_path = data_asset.path
-    
+
     # Load model and vectorizer
     model = joblib.load(model_path)
     vectorizer = joblib.load(vectorizer_path)
