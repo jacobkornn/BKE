@@ -24,12 +24,20 @@ async function saveSelectedAccounts(selectedItemIds) {
 
 function searchForButtons() {
     console.log("Made it inside search function");
+
+    // NEW: Log all <div> elements on the page with their id and class
+    const allDivs = document.getElementsByTagName("div");
+    console.log(`Found ${allDivs.length} <div> elements:`);
+    for (let i = 0; i < allDivs.length; i++) {
+        const div = allDivs[i];
+        console.log(`[${i}] id="${div.id}" class="${div.className}"`);
+    }
+
+    // ORIGINAL functionality
     if (isPaneOpen) {
-        // Target the custom pane container
-        const customPanes = document.getElementsByClassName("customPaneContainer"); // Adjust the class name as needed
+        const customPanes = document.getElementsByClassName("customPaneContainer"); // Adjust class as needed
         if (customPanes.length > 0) {
-            const customPane = customPanes[0]; // Assuming the first container is the one you want
-            // Look for the button with class name "AddTag" within the custom pane
+            const customPane = customPanes[0];
             const addTagButtons = customPane.getElementsByClassName("AddTag");
             if (addTagButtons.length > 0) {
                 console.log("AddTag button found:", addTagButtons[0]);
@@ -37,7 +45,6 @@ function searchForButtons() {
                 console.log("AddTag button not found");
             }
 
-            // Print the IDs of all buttons within the custom pane
             const buttons = customPane.getElementsByTagName("button");
             for (let button of buttons) {
                 console.log("Button ID:", button.id);
