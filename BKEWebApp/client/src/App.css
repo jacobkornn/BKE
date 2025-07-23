@@ -1,0 +1,19 @@
+.app-container {
+  display: flex;
+  height: 100vh;
+  font-family: sans-serif;
+}
+
+.panel {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.input-panel {
+  flex: 1;
+  border-right: 1px solid #ddd;
+}
+
+.output-panel {
+  flex: 2;
+}
