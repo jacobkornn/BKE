@@ -1,0 +1,100 @@
+async function handleDelete(FirstPrimaryItemId) {
+    const tagName = (await Xrm.WebApi.retrieveMultipleRecords("cr7e8_tags", `?$filter=cr7e8_tagsid eq '${FirstPrimaryItemId}'&$select=cr7e8_tagname`)).entities[0].cr7e8_tagname;
+    
+    // Open confirmation dialog
+    const confirmResult = await Xrm.Navigation.openConfirmDialog({
+        title: "Delete this tag from all records?",
+        text: "This action cannot be undone.",
+        confirmButtonLabel: "Delete",
+        cancelButtonLabel: "Cancel"
+    });
+
+    if (!confirmResult.confirmed) {
+        // User canceled the action
+        return;
+    }
+
+    try {
+        // Get the accounts using this tag
+        const accountGuids = await findAccounts(FirstPrimaryItemId);
+        
+        // Delete tag from all accounts where it's being used
+        await deleteFromAccountTags(accountGuids, tagName);
+
+        // Delete the tag row from cr7e8_tags table
+        await deleteTagRow(FirstPrimaryItemId);
+
+        // Navigate to the previous page
+        await Xrm.Navigation.navigateTo({
+            pageType: "entitylist",
+            entityName: "cr7e8_tags"
+        });
+        
+        Xrm.App.addGlobalNotification({
+            type: 2,
+            level: 4,
+            message: `${tagName} tag successfully deleted from all records`,
+            action: null,
+            data: null
+        }).then(
+            function success(result) {
+                window.setTimeout(function () { 
+                    Xrm.App.clearGlobalNotification(result); 
+                }, 5000);
+            },
+            function (error) {
+                console.log(error.message);
+            }
+        );
+
+        
+    } catch (error) {
+        console.error('Error in handleDelete:', error);
+    }
+}
+
+async function findAccounts(FirstPrimaryItemId) {
+    const accountGuids = [];
+    try {
+        // Query the cr7e8_tags table
+        const tagsRecords = await Xrm.WebApi.retrieveMultipleRecords("cr7e8_tags", `?$filter=cr7e8_tagsid eq '${FirstPrimaryItemId}'&$select=new_accountsusingtag`);
+        
+        if (tagsRecords.entities.length > 0) {
+            const new_accountsusingtag = tagsRecords.entities[0].new_accountsusingtag;
+            accountGuids.push(...new_accountsusingtag.split(', '));
+        }
+    } catch (error) {
+        console.error('Error in findAccounts:', error);
+    }
+    return accountGuids;
+}
+
+async function deleteFromAccountTags(accountGuids, tagName) {
+    try {
+        for (const accountGuid of accountGuids) {
+            // Query the account table
+            const accountRecords = await Xrm.WebApi.retrieveMultipleRecords("account", `?$filter=accountid eq '${accountGuid}'&$select=cr7e8_accounttags`);
+            
+            if (accountRecords.entities.length > 0) {
+                const cr7e8_accounttags = accountRecords.entities[0].cr7e8_accounttags;
+                const tags = cr7e8_accounttags.split(', ');
+                const updatedTags = tags.filter(tag => tag !== tagName);
+                
+                // Update the cr7e8_accounttags column
+                await Xrm.WebApi.updateRecord("account", accountGuid, {
+                    cr7e8_accounttags: updatedTags.join(', ')
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error in deleteFromAccountTags:', error);
+    }
+}
+
+async function deleteTagRow(tagId) {
+    try {
+        await Xrm.WebApi.deleteRecord("cr7e8_tags", tagId);
+    } catch (error) {
+        console.error('Error in deleteTagRow:', error);
+    }
+}

@@ -1,0 +1,20 @@
+// Function to receive data from the side pane
+function receiveDataFromPane() {
+    // Get the data passed from the side pane
+    const data = Xrm.Page.context.getQueryStringParameters();
+
+    // Check if the data contains selectedAccountIds
+    if (data.selectedAccountIds) {
+        const selectedAccountIds = data.selectedAccountIds.split(',');
+
+        // Process the selectedAccountIds as needed
+        console.log("Selected Account IDs:", selectedAccountIds);
+
+        // You can add your custom processing logic here
+    } else {
+        console.log("No selected account IDs received.");
+    }
+}
+
+// Call the function to receive data when the page loads
+document.addEventListener("DOMContentLoaded", receiveDataFromPane);

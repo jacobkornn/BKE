@@ -1,0 +1,89 @@
+let isPaneOpen = false;
+
+async function saveSelectedAccounts(selectedItemIds) {
+    var entity = {
+        "new_selecteditemsguids": selectedItemIds.join(", ")
+    };
+    try {
+        // Retrieve the row in the 'new_selecteditems' table where new_selecteditemsid equals the specified value.
+        // The specified GUID value is the first row in the new_selecteditems table, dedicated to account entities only.
+        let existingRecords = await Xrm.WebApi.retrieveMultipleRecords("new_selecteditems", "?$filter=new_selecteditemsid eq '4c6a2b28-b909-f011-bae3-000d3a9857fe'");
+    
+        if (existingRecords.entities.length > 0) {
+            // Update the row that matches the filter
+            let recordId = existingRecords.entities[0].new_selecteditemsid;
+            await Xrm.WebApi.updateRecord("new_selecteditems", recordId, entity);
+            console.log("Record updated with ID: " + recordId);
+        } else {
+            console.log("No records found with the specified filter.");
+        }
+    } catch (error) {
+        console.error("Error updating selected accounts:", error);
+    }
+}
+
+function searchForButtons() {
+    console.log("Made it inside search function");
+
+    // NEW: Log all <div> elements on the page with their id and class
+    const allDivs = document.getElementsByTagName("div");
+    console.log(`Found ${allDivs.length} <div> elements:`);
+    for (let i = 0; i < allDivs.length; i++) {
+        const div = allDivs[i];
+        console.log(`[${i}] id="${div.id}" class="${div.className}"`);
+    }
+
+    // ORIGINAL functionality
+    if (isPaneOpen) {
+        const customPanes = document.getElementsByClassName("customPaneContainer"); // Adjust class as needed
+        if (customPanes.length > 0) {
+            const customPane = customPanes[0];
+            const addTagButtons = customPane.getElementsByClassName("AddTag");
+            if (addTagButtons.length > 0) {
+                console.log("AddTag button found:", addTagButtons[0]);
+            } else {
+                console.log("AddTag button not found");
+            }
+
+            const buttons = customPane.getElementsByTagName("button");
+            for (let button of buttons) {
+                console.log("Button ID:", button.id);
+            }
+        } else {
+            console.log("Custom pane not found");
+        }
+    } else {
+        console.log("Custom pane is not open yet");
+    }
+}
+
+function openCustomPane() {
+    // Store the selected item IDs in a global variable
+    Xrm.Navigation.navigateTo({ 
+        pageType: "custom",  
+        name: "new_selecttag_9e742",
+     }, {
+        title: ' ', 
+        target: 2, 
+        position: 2,
+        width: 300, 
+        height: 400
+     })
+    .then(() => {
+        console.log("Custom pane opened successfully");
+        isPaneOpen = true;
+    })
+    .catch(console.error);
+}
+
+// Function to handle selected item IDs
+async function handleSelectedItems(selectedItemIds) {
+    // Check if the selectedItemIds array is not empty
+    if (selectedItemIds && selectedItemIds.length > 0) {
+        saveSelectedAccounts(selectedItemIds);
+        openCustomPane(selectedItemIds);
+        searchForButtons();
+    } else {
+        console.log("No items selected.");
+    }
+}
