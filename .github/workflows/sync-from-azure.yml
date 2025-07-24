@@ -2,20 +2,12 @@ name: Sync from Azure DevOps
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs at midnight
-  workflow_dispatch:     # Allows manual trigger
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:      # Allow manual trigger
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout temporary repo
-        run: |
-          git clone --bare "https://$AZURE_USERNAME:$AZURE_PAT@dev.azure.com/$AZURE_ORG/$AZURE_PROJECT/_git/$AZURE_REPO" azure-repo.git
-          cd azure-repo.git
-          git remote set-url origin "https://$GIT_USERNAME:$GIT_TOKEN@github.com/$GIT_ORG/$GIT_REPO.git"
-          git push --prune --tags origin +refs/heads/*:refs/heads/*
 
     env:
       AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
@@ -27,3 +19,18 @@ jobs:
       GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
       GIT_ORG: jacobkornn
       GIT_REPO: BKE
+
+    steps:
+      - name: Clone Azure DevOps repo as bare mirror
+        run: |
+          echo "Cloning from Azure DevOps..."
+          AZURE_URL="https://${AZURE_USERNAME}:${AZURE_PAT}@dev.azure.com/${AZURE_ORG}/${AZURE_PROJECT}/_git/${AZURE_REPO}"
+          git clone --bare "$AZURE_URL" azure-repo.git
+
+      - name: Push to GitHub (mirror all branches/tags)
+        run: |
+          echo "Pushing to GitHub mirror..."
+          cd azure-repo.git
+          GITHUB_URL="https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/${GIT_ORG}/${GIT_REPO}.git"
+          git remote set-url origin "$GITHUB_URL"
+          git push --mirror
