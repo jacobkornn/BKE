@@ -1,0 +1,29 @@
+name: Sync from Azure DevOps
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs at midnight
+  workflow_dispatch:     # Allows manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout temporary repo
+        run: |
+          git clone --bare https://$AZURE_USERNAME:$AZURE_PAT@dev.azure.com/$AZURE_ORG/$AZURE_PROJECT/_git/$AZURE_REPO azure-repo.git
+          cd azure-repo.git
+          git remote set-url origin https://$GIT_USERNAME:$GIT_TOKEN@github.com/$GIT_ORG/$GIT_REPO.git
+          git push --prune --tags origin +refs/heads/*:refs/heads/*
+
+    env:
+      AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
+      AZURE_PAT: ${{ secrets.AZURE_PAT }}
+      AZURE_ORG: BoxK
+      AZURE_PROJECT: BKE25
+      AZURE_REPO: BKESoftware
+      GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+      GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+      GIT_ORG: jacobkornn
+      GIT_REPO: BKE
