@@ -23,6 +23,10 @@ jobs:
     steps:
       - name: Clone Azure DevOps repo as bare mirror
         run: |
+          echo "AZURE_USERNAME: ${AZURE_USERNAME}"
+          echo "AZURE_PAT length: ${#AZURE_PAT}"
+          echo "GIT_USERNAME: ${GIT_USERNAME}"
+          echo "GIT_TOKEN length: ${#GIT_TOKEN}"
           echo "Cloning from Azure DevOps..."
           AZURE_URL="https://${AZURE_USERNAME}:${AZURE_PAT}@dev.azure.com/${AZURE_ORG}/${AZURE_PROJECT}/_git/${AZURE_REPO}"
           git clone --bare "$AZURE_URL" azure-repo.git
