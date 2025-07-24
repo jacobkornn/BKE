@@ -23,7 +23,7 @@ jobs:
       AZURE_ORG: BoxK
       AZURE_PROJECT: BKE25
       AZURE_REPO: BKESoftware
-      GIT_USERNAME: ${{ secrets.GITHUB_USERNAME }}
-      GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+      GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
       GIT_ORG: jacobkornn
       GIT_REPO: BKE
