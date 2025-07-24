@@ -2,8 +2,8 @@ name: Sync from Azure DevOps
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs daily at midnight UTC
-  workflow_dispatch:     # Allows manual trigger from GitHub UI
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:      # Allow manual trigger
 
 jobs:
   sync:
@@ -21,25 +21,16 @@ jobs:
       GIT_REPO: BKE
 
     steps:
-      - name: Encode Azure DevOps PAT and Clone Repo
+      - name: Clone Azure DevOps repo as bare mirror
         run: |
-          echo "Encoding Azure DevOps token and cloning..."
-
-          ENCODED_PAT=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${AZURE_PAT}'))")
-          AZURE_URL="https://${AZURE_USERNAME}:${ENCODED_PAT}@dev.azure.com/${AZURE_ORG}/${AZURE_PROJECT}/_git/${AZURE_REPO}"
-
-          echo "::add-mask::$AZURE_URL"
+          echo "Cloning from Azure DevOps..."
+          AZURE_URL="https://${AZURE_USERNAME}:${AZURE_PAT}@dev.azure.com/${AZURE_ORG}/${AZURE_PROJECT}/_git/${AZURE_REPO}"
           git clone --bare "$AZURE_URL" azure-repo.git
 
-      - name: Encode GitHub Token and Push Mirror
+      - name: Push to GitHub (mirror all branches/tags)
         run: |
           echo "Pushing to GitHub mirror..."
-
           cd azure-repo.git
-
-          ENCODED_GIT_TOKEN=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${GIT_TOKEN}'))")
-          GITHUB_URL="https://${GIT_USERNAME}:${ENCODED_GIT_TOKEN}@github.com/${GIT_ORG}/${GIT_REPO}.git"
-
-          echo "::add-mask::$GITHUB_URL"
+          GITHUB_URL="https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/${GIT_ORG}/${GIT_REPO}.git"
           git remote set-url origin "$GITHUB_URL"
           git push --mirror
