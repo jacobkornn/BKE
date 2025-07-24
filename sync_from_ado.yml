@@ -14,7 +14,7 @@ jobs:
         run: |
           git clone --bare https://$AZURE_USERNAME:$AZURE_PAT@dev.azure.com/$AZURE_ORG/$AZURE_PROJECT/_git/$AZURE_REPO azure-repo.git
           cd azure-repo.git
-          git remote set-url origin https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_ORG/$GITHUB_REPO.git
+          git remote set-url origin https://$GIT_USERNAME:$GIT_TOKEN@github.com/$GIT_ORG/$GIT_REPO.git
           git push --prune --tags origin +refs/heads/*:refs/heads/*
 
     env:
@@ -23,7 +23,7 @@ jobs:
       AZURE_ORG: BoxK
       AZURE_PROJECT: BKE25
       AZURE_REPO: BKESoftware
-      GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_ORG: jacobkornn
-      GITHUB_REPO: BKE
+      GIT_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+      GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GIT_ORG: jacobkornn
+      GIT_REPO: BKE
